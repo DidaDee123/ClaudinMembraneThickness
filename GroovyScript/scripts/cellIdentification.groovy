@@ -1,25 +1,59 @@
 import qupath.lib.gui.measure.ObservableMeasurementTableData
 
 
+
+private def smoothen(String annoName) {
+    rings = getAnnotationObjects()
+    selectAnnotations()
+    runPlugin('qupath.lib.plugins.objects.DilateAnnotationPlugin', '{"radiusMicrons": 15.0,  "lineCap": "Round",  "removeInterior": false,  "constrainToParent": false}');
+    removeObjects(rings, true)
+    selectAnnotations()
+    rings = getAnnotationObjects()
+    runPlugin('qupath.lib.plugins.objects.DilateAnnotationPlugin', '{"radiusMicrons": -15.0,  "lineCap": "Round",  "removeInterior": false,  "constrainToParent": false}');
+    removeObjects(rings,true)
+    resetSelection()
+
+}
+
+
+/**
+ * 
+ */
+private def cellDetection() {
+   getAnnotationObjects().each {
+       if (it.getName() =='Annotation') {
+           
+       }
+           
+   }
+}
+
 /**
  * Rename all cells from each annotation hierarchy for better ID
  * Print out defined measurements of each cell
  */
 private def cellIdentification() {
    // Get children annotations of hierarchy
-    def children = null
+    def children = []
+    int annoIndex = 0
     getAnnotationObjects().each {
-        children = it.getChildObjects()
+        children[annoIndex] = it.getChildObjects()
+        annoIndex++
     }
     
     // Rename children annotations for better ID
-    int cell_index = 1
-    for (int i; i < children.size(); i++) { 
-        new_child = 'cell_' + cell_index
-        children[i].setName(new_child)
-        print(children[i].getName())
-        println "${children[i].getROI().getGeometry()}}"
-        cell_index++
+    for (int j = 0; j < children.size(); j++) {
+        println "${getAnnotationObjects()[j].getName()}:"
+        
+        int cell_index = 1
+        for (int i = 0; i < children[j].size(); i++) { 
+            new_child = 'cell_' + cell_index
+            children[j][i].setName(new_child)
+            println "${children[j][i].getName()}:"
+            println "${children[j][i].getROI().getGeometry()}"
+            cell_index++
+        }
+        println ""
     } 
 }
 
@@ -65,5 +99,6 @@ private def insertThicknessMeasurement(Object obj) {
  * Main
  */
 public static void main(String[] args) {
-    cellIdentification()
+    cellIdentification() 
+
 }

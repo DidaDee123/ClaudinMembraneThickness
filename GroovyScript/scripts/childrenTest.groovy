@@ -13,18 +13,26 @@
 
 
 // Get children annotations of hierarchy
-def children = null
-getAnnotationObjects().each {
-    children = it.getChildObjects()
-}
 
+print(getAnnotationObjects().size())
+def children = []
+print(children.size())
+int annoIndex = 0
+getAnnotationObjects().each {
+    children[annoIndex] = it.getChildObjects()
+    annoIndex++
+}
+print(children.size())
 // Rename children annotations for better ID
-int cell_index = 1
-for (int i; i < children.size(); i++) { 
-    new_child = 'cell_' + cell_index
-    children[i].setName(new_child)
-    print(children[i].getName())
-    println "${children[i].getROI().getGeometry()}}"
-    cell_index++
+for (int j = 0; j < children.size(); j++) {
+    
+    int cell_index = 1
+    for (int i = 0; i < children[j].size(); i++) { 
+        new_child = 'cell_' + cell_index
+        children[j][i].setName(new_child)
+        print(children[j][i].getName())
+        println "${children[j][i].getROI().getGeometry()}}"
+        cell_index++
+    }
 }
 
