@@ -1,4 +1,5 @@
 import qupath.lib.gui.measure.ObservableMeasurementTableData
+import qupath.lib.roi.RoiTools 
 
 
 
@@ -32,7 +33,7 @@ private def cellDetection() {
  * Rename all cells from each annotation hierarchy for better ID
  * Print out defined measurements of each cell
  */
-private def cellIdentification() {
+private def identifyCells() {
    // Get children annotations of hierarchy
     def children = []
     int annoIndex = 0
@@ -71,26 +72,34 @@ private def checkAdjacent(Object cell) {
  * Inserts 5 Line-annotations between random cell membranes
  * Prints out the measurements of thickness of each annotation
  */
-private def insertThicknessMeasurement(Object obj) {
-    int z = 0
-    int t = 0
-    def plane = ImagePlane.getPlane(z, t)
-    def roi = ROIs.createLineROI(21450.83, 14484.25, 21449.41, 14483.4, plane)
-    //def roi = ROIs.createLineROI(21445.529, 14490.29, 0, 0, plane)
-    def annotation = PathObjects.createAnnotationObject(roi)
-    annotation.setName("Thickness_1")
-    color = getColorRGB(0, 100, 100)
-    annotation.setColor(color)
-    addObject(annotation)
-    
-    def ob = new ObservableMeasurementTableData();
+private def insertThicknessMeasurement() {
+//    int z = 0
+//    int t = 0
+//    def plane = ImagePlane.getPlane(z, t)
+//    def roi = ROIs.createLineROI(21450.83, 14484.25, 21449.41, 14483.4, plane)
+//    //def roi = ROIs.createLineROI(21445.529, 14490.29, 0, 0, plane)
+//    def annotation = PathObjects.createAnnotationObject(roi)
+//    annotation.setName("Thickness_1")
+//    color = getColorRGB(0, 100, 100)
+//    annotation.setColor(color)
+//    addObject(annotation)
+//    
+//    def ob = new ObservableMeasurementTableData();
+//    def annotations = getAnnotationObjects()
+//    ob.setImageData(getCurrentImageData(),  annotations);
+//    int index = 0
+//    annotations.each { 
+//        length=ob.getNumericValue(it, "Length µm")
+//        print "Thickness_${index}: ${length}µm"
+//        index++
+//    }
+    def tools = new RoiTools()
     def annotations = getAnnotationObjects()
-    ob.setImageData(getCurrentImageData(),  annotations);
-    int index = 0
-    annotations.each { 
-        length=ob.getNumericValue(it, "Length µm")
-        print "Thickness_${index}: ${length}µm"
-        index++
+    annotations.each {
+        print(it)
+        print("Distance between cells:")
+        println tools.getBoundaryDistance(it.getChildObjects()[0].getROI(),
+                                            it.getChildObjects()[1].getROI())
     }
 }    
 
@@ -99,6 +108,7 @@ private def insertThicknessMeasurement(Object obj) {
  * Main
  */
 public static void main(String[] args) {
-    cellIdentification() 
+    identifyCells() 
+    insertThicknessMeasurement()
 
 }
