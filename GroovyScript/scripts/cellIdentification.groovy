@@ -1,9 +1,35 @@
+/*
+ * getAnnotationObjects() -> class java.util.ArrayList
+ * getAnnotationObjects()[] -> class PathAnnotationObject
+ * it.getChildObjects() -> class java.util.Collections$UnmodifiableCollection
+ * it.getChildObjects()[] -> class PathCellObject
+ * 
+ * https://qupath.github.io/javadoc/docs/qupath/lib/objects/PathAnnotationObject.html
+ * https://qupath.github.io/javadoc/docs/qupath/lib/objects/PathCellObject.html
+ * https://qupath.github.io/javadoc/docs/qupath/lib/roi/PolygonROI.html
+ * 
+ * 
+ */
+
+//length 36 = 8.2707um
+//length 1 = 0.22974166666666667
+
+
 import qupath.lib.gui.measure.ObservableMeasurementTableData
 import qupath.lib.roi.RoiTools 
 
 
 
-private def smoothen(String annoName) {
+private def convertToObjects() {
+    def detections = getDetectionObjects()
+    def newAnnotations = detections.collect {
+        return PathObjects.createAnnotationObject(it.getROI(), it.getPathClass())
+    }
+    removeObjects(detections, true)
+    insertObjects(newAnnotations)
+}
+
+private def smoothen() {
     rings = getAnnotationObjects()
     selectAnnotations()
     runPlugin('qupath.lib.plugins.objects.DilateAnnotationPlugin', '{"radiusMicrons": 15.0,  "lineCap": "Round",  "removeInterior": false,  "constrainToParent": false}');
@@ -18,18 +44,6 @@ private def smoothen(String annoName) {
 
 
 /**
- * 
- */
-private def cellDetection() {
-   getAnnotationObjects().each {
-       if (it.getName() =='Annotation') {
-           
-       }
-           
-   }
-}
-
-/**
  * Rename all cells from each annotation hierarchy for better ID
  * Print out defined measurements of each cell
  */
@@ -38,8 +52,10 @@ private def identifyCells() {
     def children = []
     int annoIndex = 0
     getAnnotationObjects().each {
-        children[annoIndex] = it.getChildObjects()
-        annoIndex++
+        if (it.getChildObjects() != null) {
+            children[annoIndex] = it.getChildObjects()
+            annoIndex++
+        }
     }
     
     // Rename children annotations for better ID
@@ -58,15 +74,58 @@ private def identifyCells() {
     } 
 }
 
+/**
+ * Same concept as identifyCells(). However must be executed after hierarchy is set
+ */
+private def nameDetections() {
+    getAnnotationObjects().each {
+        parentName = it.getName()
+        
+        if (it.hasChildObjects()) {
+            childIndex = 1
+            it.getChildObjects().each {
+                it.setName(parentName + "_" + "cell_" + childIndex)
+                childIndex++
+            }
+        }
+    }    
+}
+
 
 /**
  * Check for adjacent cells of selected cell
  * Adjacent cells in list
  */
-private def checkAdjacent(Object cell) {
-   
+private def findAdjacents(String roi) {
+    int averageDiameter = getAverageDiameter(roi)
+    println "Average Diameter: " + averageDiameter
+    int childSize = 0
+    for (annotation in getAnnotationObjects()) {
+        if (annotation.getName() == roi) {
+            childSize = annotation.getChildObjects().size()
+            break
+        }
+    }
 }
-   
+
+
+/**
+ * 
+ */
+private int getAverageDiameter(String roi) {
+    int averageDiameter = 0
+    for (annotation in getAnnotationObjects()) {
+        if (annotation.hasChildObjects() && annotation.getName() == roi) {
+            annotation.getChildObjects().each {
+                print(it)
+                print(it.getROI().getLength())
+                averageDiameter = averageDiameter + it.getROI().getLength()
+            }
+            return averageDiameter / 3.14 / annotation.getChildObjects().size()
+            
+        }
+    }
+}
 
 /**
  * Inserts 5 Line-annotations between random cell membranes
@@ -108,7 +167,6 @@ private def insertThicknessMeasurement() {
  * Main
  */
 public static void main(String[] args) {
-    identifyCells() 
-    insertThicknessMeasurement()
-
+    nameDetections()
+    
 }
